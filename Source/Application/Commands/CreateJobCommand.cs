@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 using Application.DTOs;
 using AutoMapper;
 using Microsoft.Extensions.Logging;
+using Application.Validation;
+using FluentValidation;
 
 namespace Application.Commands
 {
@@ -16,6 +18,7 @@ namespace Application.Commands
     public class CreateJobCommand : IRequest<string>
     {
         private CreateJobRequest NewJobRequest { get; }
+        private CreateJobRequestValidator validator { get; }
 
         /// <summary>
         /// Command for creating a job using MediatR's IRequest
@@ -24,6 +27,7 @@ namespace Application.Commands
         public CreateJobCommand(CreateJobRequest newJobRequest)
         {
             NewJobRequest = newJobRequest;
+            validator = new CreateJobRequestValidator();
         }
 
         public class CreateJobCommandHandler : IRequestHandler<CreateJobCommand, string>
@@ -44,6 +48,7 @@ namespace Application.Commands
                 try
                 {
                     Job job = _mapper.Map<Job>(request.NewJobRequest);
+                    request.validator.ValidateAndThrow(request.NewJobRequest);
                     await _unitOfWork.Jobs.AddAsync(job);
                     return job.Id.ToString();
                 }
